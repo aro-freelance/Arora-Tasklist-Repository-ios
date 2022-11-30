@@ -14,11 +14,11 @@ import RealmSwift
 
 class MainViewController: UIViewController {
     
-    //view outlets
+    @IBOutlet weak var categoryPicker: UIPickerView!
     
+    @IBOutlet weak var tableView: UITableView!
     
-    
-    
+    @IBOutlet weak var deleteCatButton: UIButton!
     
     var categoryString : String = ""
     var category : Category = Category()
@@ -42,6 +42,7 @@ class MainViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         
+        
         //TODO: load fulltasklist from Realm stored value
         
         setCurrentTaskList(fullTaskList)
@@ -52,10 +53,12 @@ class MainViewController: UIViewController {
         
     }
     
-    //delete button method
     
-    
-    
+    @IBAction func deleteCatButtonPressed(_ sender: UIButton) {
+        
+        //TODO: implement
+        
+    }
     
     func deleteCategory(){
         
@@ -83,6 +86,16 @@ class MainViewController: UIViewController {
     //add button method
     
     
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        
+        let storyboard = UIStoryboard.init(name: "Main", bundle: nil)
+        let secondVc = storyboard.instantiateViewController(withIdentifier: "WriteTaskViewController") as! WriteTaskViewController
+        
+        
+        secondVc.modalPresentationStyle = .fullScreen
+        self.show(secondVc, sender: true)
+        
+    }
     
     
     

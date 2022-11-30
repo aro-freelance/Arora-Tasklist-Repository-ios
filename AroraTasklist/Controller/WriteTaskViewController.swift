@@ -17,6 +17,23 @@ class WriteTaskViewController: UIViewController {
     //view outlets
     
     
+    @IBOutlet weak var calendarPicker: UIDatePicker!
+    
+    @IBOutlet weak var taskText: UITextView!
+    
+    @IBOutlet weak var categoryPicker: UIPickerView!
+    
+    @IBOutlet weak var categoryText: UITextField!
+    
+    @IBOutlet weak var priorityPicker: UIPickerView!
+    
+    @IBOutlet weak var addCategoryButton: UIButton!
+    
+    @IBOutlet weak var saveButton: UIButton!
+    
+    
+    
+    
     var priority : Priority = Priority.LOW
     
     var dueDate : Date = Date()
@@ -58,48 +75,33 @@ class WriteTaskViewController: UIViewController {
         
     }
     
+    @IBAction func addCategoryButtonPressed(_ sender: UIButton) {
+        
+    }
     
-    //category enter button method
-    
-    
-    
-    //category button method
-    
-    
-    //radio button methods
-    
+    @IBAction func categoryEditStart(_ sender: UITextField) {
+        
+        addCategoryButton.isHidden = false
+    }
     
     
-    //priority button method
-    
-    
-    
-    //next week chip method
-    
-    
-    
-    //tomorrow chip method
-    
-    
-    
-    
-    //today chip method
-    
-    
-    
-    //calendar view method
-    
-    
-    
-    //calendar button method
-    
-    
-    
-    //save button method
-    
-    
-    
-    //spinner selection method
+    @IBAction func saveButtonPressed(_ sender: UIButton) {
+        
+        //TODO: implement save and then go back to MainViewController
+        
+        
+        
+        
+        
+        let storyboard = UIStoryboard.init(name: "Main", bundle: nil)
+        let secondVc = storyboard.instantiateViewController(withIdentifier: "MainViewController") as! MainViewController
+        
+        secondVc.modalPresentationStyle = .fullScreen
+        self.show(secondVc, sender: true)
+        
+        print("save pressed")
+        
+    }
     
     
     func reset(){
