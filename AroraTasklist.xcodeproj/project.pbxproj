@@ -14,7 +14,6 @@
 		382DD9462937C079004D385B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 382DD9452937C079004D385B /* Assets.xcassets */; };
 		382DD9492937C079004D385B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 382DD9472937C079004D385B /* LaunchScreen.storyboard */; };
 		382DD9532937C35A004D385B /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382DD9522937C35A004D385B /* Category.swift */; };
-		382DD9562937C3BD004D385B /* Priority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382DD9552937C3BD004D385B /* Priority.swift */; };
 		382DD9582937C3DB004D385B /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382DD9572937C3DB004D385B /* Task.swift */; };
 		382DD95A2937C439004D385B /* WriteTaskViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382DD9592937C439004D385B /* WriteTaskViewController.swift */; };
 		382DD95D2937C5F0004D385B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 382DD95C2937C5F0004D385B /* RealmSwift */; };
@@ -30,7 +29,6 @@
 		382DD9482937C079004D385B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		382DD94A2937C079004D385B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		382DD9522937C35A004D385B /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
-		382DD9552937C3BD004D385B /* Priority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Priority.swift; sourceTree = "<group>"; };
 		382DD9572937C3DB004D385B /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		382DD9592937C439004D385B /* WriteTaskViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WriteTaskViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -99,7 +97,6 @@
 			isa = PBXGroup;
 			children = (
 				382DD9522937C35A004D385B /* Category.swift */,
-				382DD9552937C3BD004D385B /* Priority.swift */,
 				382DD9572937C3DB004D385B /* Task.swift */,
 			);
 			path = Model;
@@ -185,7 +182,6 @@
 				382DD9412937C076004D385B /* MainViewController.swift in Sources */,
 				382DD93D2937C076004D385B /* AppDelegate.swift in Sources */,
 				382DD93F2937C076004D385B /* SceneDelegate.swift in Sources */,
-				382DD9562937C3BD004D385B /* Priority.swift in Sources */,
 				382DD9582937C3DB004D385B /* Task.swift in Sources */,
 				382DD95A2937C439004D385B /* WriteTaskViewController.swift in Sources */,
 				382DD9532937C35A004D385B /* Category.swift in Sources */,

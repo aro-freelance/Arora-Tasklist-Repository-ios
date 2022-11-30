@@ -28,7 +28,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     var currentTaskList = [Task]()
     var fullTaskList : Results<Task>?
     
-    var categories = [Category]()
+    var categories : Results<Category>?
     
     var isLoadingFromDelete = false
     
@@ -47,43 +47,161 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         setCurrentTaskList(fullTaskList)
         
-        sortByDate(currentTaskList)
+        currentTaskList = sortByDate(currentTaskList)
+        
+        setupCategories()
         
         tableView.reloadData()
         
     }
     
+    func deleteCategory(){
+        
+        var categoryToDelete : Category = category
+        
+        if let categoryList = categories{
+            
+            for category in categoryList{
+             
+                if(category.categoryName == categoryToDelete.categoryName){
+                    
+                    categories?.realm?.delete(categoryToDelete)
+    
+                }
+            }
+        }
+    }
+    
     
     @IBAction func deleteCatButtonPressed(_ sender: UIButton) {
         
-        //TODO: implement
+        //show a dialog to confirm that user wants to delete. if they do call deleteCategory
+        let alert = UIAlertController(title: "Delete", message: "Are you sure that you want to delete this category?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Delete", style: .default, handler: { [weak alert] (_) in
+            print("delete method called")
+            self.deleteCategory()
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { [weak alert] (_) in
+            print("delete canceled")
+        }))
+        
+        self.present(alert, animated: true, completion: nil)
         
     }
     
-    func deleteCategory(){
-        
-        //TODO: implement
-        
-    }
     
-    func getCategories(_ categoryList : [Category]){
+    func setupCategories(){
         
-        //TODO: implement
+        
+        var toDoListExists = false
+        var completedExists = false
+        
+        if let categoryList = categories{
+            
+            for category in categoryList{
+             
+                if(category.categoryName == "To Do List"){
+                    
+                    toDoListExists = true
+    
+                }
+                
+                if(category.categoryName == "Completed"){
+                    
+                    completedExists = true
+    
+                }
+            }
+        }
+        
+        if(!toDoListExists){
+            
+            let category = Category(name: "To Do List")
+            
+            categories?.realm?.add(category)
+            
+        }
+        
+        if(!completedExists){
+            
+            let category = Category(name: "Completed")
+            
+            categories?.realm?.add(category)
+            
+        }
+        
+        //TODO: set the categorylist to the category picker
+        
+        
+        if(isLoadingFromDelete){
+            //TODO: set the category picker to show completed list
+            
+            isLoadingFromDelete = false
+            
+        }
+        else{
+            //TODO: set the category picker to the first item
+        }
+        
         
     }
     
     func setCurrentTaskList(_ tasks : Results<Task>?){
         
-        //TODO: implement
+        currentTaskList.removeAll()
+        
+        //for the full list of tasks
+        if let taskList = fullTaskList{
+            for task in taskList{
+             
+                //if the task matches the selected category
+                if(task.category == categoryString){
+                    
+                    //add it to the currentTaskList
+                    currentTaskList.append(task)
+                }
+                
+                
+            }
+        }
+        
+        //there are tasks in the current list
+        if(currentTaskList.count > 0){
+            deleteCatButton.isHidden = true
+        }
+        // there are not tasks in the current list
+        else{
+            
+            //if the category is not a default category and is empty show the delete category button
+            if(categoryString != nil){
+                if(categoryString != "To Do List" && categoryString != "Completed"){
+                    //TODO: display feedback to user telling them that the category is empty
+                    deleteCatButton.isHidden = false
+                    
+                }
+            }
+            //To Do List category empty
+            else if (categoryString == "To Do List"){
+                //TODO: display feedback to user telling them that the category is empty
+                deleteCatButton.isHidden = true
+            }
+            //completed category empty
+            else{
+                //TODO: display feedback to user that there are no completed tasks
+                deleteCatButton.isHidden = true
+            }
+            
+        }
         
     }
     
-    func sortByDate(_ tasks : [Task]){
+    
+    
+    func sortByDate(_ tasks : [Task]) -> [Task]{
         
+        return tasks.sorted(by: { $0.dueDate > $1.dueDate })
         
     }
-    
-    //add button method
     
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -97,23 +215,8 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     
     
-    func showWriteTaskScreen(){
-        
-        //TODO: implement
-        
-        //TODO: send isEdit, task
-        
-    }
-    
-    
-    
-    //spinner methods
-    //TODO: spinner item selected
-    
-    
-    
-    //radio button
-    //TODO: radio button clicked method
+    //picker methods
+    //TODO: picker item selected (change category)
     
     
     
@@ -132,6 +235,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         cell.textLabel?.text = task.taskString
         
+        //TODO: method for checkmark clicked in Android reference onTaskRadioButtonClicked
         cell.accessoryType = task.isDone ? .checkmark : .none
         
         //TODO: show date in a better way?
@@ -163,7 +267,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         let secondVc = storyboard.instantiateViewController(withIdentifier: "WriteTaskViewController") as! WriteTaskViewController
         
         secondVc.isEdit = true
-        secondVc.task = currentTaskList[indexPath.row]
+        secondVc.taskToEdit = currentTaskList[indexPath.row]
         
         secondVc.modalPresentationStyle = .fullScreen
         self.show(secondVc, sender: true)
