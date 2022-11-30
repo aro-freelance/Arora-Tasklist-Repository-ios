@@ -39,6 +39,8 @@ class WriteTaskViewController: UIViewController {
     
     var categoryString : String?
     
+    //var categoryStrings = [String]()
+    
     var categoriesFull : Results<Category>?
     
     var categories = [Category]()
@@ -57,16 +59,25 @@ class WriteTaskViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         
         taskText.text = taskToEdit.taskString
+        
         setupCategories()
         
     }
+    
+  
     
     func setupCategories(){
         
         categories.removeAll()
         
+        categoriesFull = realm.objects(Category.self)
+        
         var toDoListExists = false
         var completedExists = false
+        
+        //TODO: test and fix this. categoriesFull is nil later when we are saving.
+        //might be best to just not turn it into an array list.  find a way to pull the data out and make a list of strings instead.
+        
         
         if let categoryList = categoriesFull{
             
@@ -74,12 +85,14 @@ class WriteTaskViewController: UIViewController {
              
                 if(category.categoryName == "To Do List"){
                     
+                    print("to do list exists")
                     toDoListExists = true
     
                 }
                 
                 if(category.categoryName == "Completed"){
                     
+                    print("completed exists")
                     completedExists = true
     
                 }
@@ -87,17 +100,21 @@ class WriteTaskViewController: UIViewController {
             }
             
             if(toDoListExists){
-                for category in categories {
+                print("filling list without adding to do list")
+                for category in categoryList {
                     
                     categories.append(category)
                     
                 }
             }
             else{
-                let toDoCat = Category(name: "To Do List")
+                print("filling list adding to do list")
+                var toDoCat = Category()
+                toDoCat.categoryName = "To Do List"
+                
                 categories.append(toDoCat)
                 
-                for category in categories {
+                for category in categoryList {
                     categories.append(category)
                 }
             }
@@ -111,6 +128,10 @@ class WriteTaskViewController: UIViewController {
                 }
             }
             
+            print("categories: \(categories)")
+            
+        } else{
+            print("WriteVC: failed to get category list from realm")
         }
         
         
@@ -125,7 +146,8 @@ class WriteTaskViewController: UIViewController {
             if(!userCategoryInput.isEmpty){
                 
                 //make a category from it
-                let newCategory = Category(name: userCategoryInput)
+                var newCategory = Category()
+                newCategory.categoryName = userCategoryInput
                 //add it to the list
                 categories.append(newCategory)
                 
@@ -202,22 +224,34 @@ class WriteTaskViewController: UIViewController {
             }
         }
         
-        let newTask = Task(taskName: taskString, priorityTypeString: priorityString!, categoryString: categoryString!, dueDateSelected: dueDate!)
+        var category = Category()
+        category.categoryName = categoryString!
         
-        let category = Category(name: categoryString!)
+        var newTask = Task()
+        newTask.taskString = taskString
+        newTask.dueDate = dueDate!
+        newTask.priorityString = priorityString!
+        newTask.category = categoryString!
+        
         
         //if the category does not exist, save it to realm db
-        if(!(categoriesFull?.contains(where: {$0.categoryName == categoryString}))!){
-            do{
-                try realm.write {
-                    realm.add(category)
+        if let safeCategoriesFull = categoriesFull{
+            if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
+                do{
+                    try realm.write {
+                        realm.add(category)
+                    }
+                    
+                } catch {
+                    print("Error saving category \(error)")
+                    //TODO: show user the feedback
                 }
-                
-            } catch {
-                print("Error saving category \(error)")
-                //TODO: show user the feedback
             }
+        } else{
+            print("categories full is nil. cannot write new category")
+            //TODO: show user that saving failed
         }
+        
         
         //editing a task
         if(isEdit){

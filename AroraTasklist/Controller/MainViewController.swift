@@ -92,6 +92,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func setupCategories(){
         
+        categories = realm.objects(Category.self)
         
         var toDoListExists = false
         var completedExists = false
@@ -113,22 +114,45 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                 }
             }
         }
+        else{
+            print("Main: failed to get categories from realm")
+        }
         
         if(!toDoListExists){
             
-            let category = Category(name: "To Do List")
+            var category = Category()
+            category.categoryName = "To Do List"
             
-            categories?.realm?.add(category)
+            do{
+                try realm.write {
+                    realm.add(category)
+                }
+                
+            } catch {
+                print("Error saving category \(error)")
+                //TODO: show user the feedback
+            }
             
         }
         
         if(!completedExists){
             
-            let category = Category(name: "Completed")
+            var category = Category()
+            category.categoryName = "Completed"
             
-            categories?.realm?.add(category)
+            do{
+                try realm.write {
+                    realm.add(category)
+                }
+                
+            } catch {
+                print("Error saving category \(error)")
+                //TODO: show user the feedback
+            }
             
         }
+        
+        print("categories: \(categories)")
         
         //TODO: set the categorylist to the category picker
         
