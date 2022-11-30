@@ -12,7 +12,7 @@ class Task : Object {
     
     @objc dynamic var taskId : Int = 0
     
-    @objc dynamic var task : String = ""
+    @objc dynamic var taskString : String = ""
     
     //save this as a string and convert it back later
     @objc dynamic var priorityString : String = "LOW"

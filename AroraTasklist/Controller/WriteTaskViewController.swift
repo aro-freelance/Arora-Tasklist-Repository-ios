@@ -59,7 +59,7 @@ class WriteTaskViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         
-        //TODO: set edittext.text to task.task (make get, set methods?)
+        taskText.text = task.taskString
         
     }
     
@@ -98,8 +98,6 @@ class WriteTaskViewController: UIViewController {
         
         secondVc.modalPresentationStyle = .fullScreen
         self.show(secondVc, sender: true)
-        
-        print("save pressed")
         
     }
     

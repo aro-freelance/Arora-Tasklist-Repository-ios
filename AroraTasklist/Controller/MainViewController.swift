@@ -12,7 +12,8 @@ import RealmSwift
  this will show the tableview of tasks. it will have a dropdown to select categories (which will update which tasks are shown). equivalent of MainActivity in Android project.
  */
 
-class MainViewController: UIViewController {
+class MainViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    
     
     @IBOutlet weak var categoryPicker: UIPickerView!
     
@@ -23,8 +24,9 @@ class MainViewController: UIViewController {
     var categoryString : String = ""
     var category : Category = Category()
     
+    let realm = try! Realm()
     var currentTaskList = [Task]()
-    var fullTaskList = [Task]()
+    var fullTaskList : Results<Task>?
     
     var categories = [Category]()
     
@@ -43,13 +45,11 @@ class MainViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         
         
-        //TODO: load fulltasklist from Realm stored value
-        
         setCurrentTaskList(fullTaskList)
         
         sortByDate(currentTaskList)
         
-        //TODO: set currentTaskList to the tableview
+        tableView.reloadData()
         
     }
     
@@ -72,7 +72,7 @@ class MainViewController: UIViewController {
         
     }
     
-    func setCurrentTaskList(_ tasks : [Task]){
+    func setCurrentTaskList(_ tasks : Results<Task>?){
         
         //TODO: implement
         
@@ -90,8 +90,6 @@ class MainViewController: UIViewController {
         
         let storyboard = UIStoryboard.init(name: "Main", bundle: nil)
         let secondVc = storyboard.instantiateViewController(withIdentifier: "WriteTaskViewController") as! WriteTaskViewController
-        
-        
         secondVc.modalPresentationStyle = .fullScreen
         self.show(secondVc, sender: true)
         
@@ -119,8 +117,58 @@ class MainViewController: UIViewController {
     
     
     
-    //TODO: Tableview adapter methods (and tableview on click method)
-    //if something is clicked isEdit = true
+///MARK: Tableview Methods
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        return currentTaskList.count
+    }
+    
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
+        
+        let task = currentTaskList[indexPath.row]
+        
+        cell.textLabel?.text = task.taskString
+        
+        cell.accessoryType = task.isDone ? .checkmark : .none
+        
+        //TODO: show date in a better way?
+        cell.detailTextLabel?.text = task.dueDate.description
+        
+        var priorityColor : UIColor = .gray
+        
+        //TODO: test better colors
+        if(task.priorityString == "LOW"){
+            priorityColor = .blue
+        } else if(task.priorityString == "MEDIUM"){
+            priorityColor = .systemYellow
+        } else if(task.priorityString == "HIGH"){
+            priorityColor = .systemRed
+        } else{
+            priorityColor = .white
+        }
+    
+        cell.backgroundColor = priorityColor
+       
+        
+        return cell
+        
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        let storyboard = UIStoryboard.init(name: "Main", bundle: nil)
+        let secondVc = storyboard.instantiateViewController(withIdentifier: "WriteTaskViewController") as! WriteTaskViewController
+        
+        secondVc.isEdit = true
+        secondVc.task = currentTaskList[indexPath.row]
+        
+        secondVc.modalPresentationStyle = .fullScreen
+        self.show(secondVc, sender: true)
+        
+    }
     
     
 
