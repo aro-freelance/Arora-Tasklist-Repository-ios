@@ -12,7 +12,8 @@ import RealmSwift
  this will be the controller for making new tasks and editing tasks. It is the equivalent of BottomSheetFragment in the Android project.
  */
 
-class WriteTaskViewController: UIViewController {
+class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource{
+    
     
     @IBOutlet weak var calendarPicker: UIDatePicker!
     
@@ -47,12 +48,24 @@ class WriteTaskViewController: UIViewController {
     
     var taskToEdit = Task()
     
+    var priorityList = [String](arrayLiteral: "LOW", "MEDIUM", "HIGH")
+    
     
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
+        categoryPicker.delegate = self
+        categoryPicker.dataSource = self
+        
+        priorityPicker.delegate = self
+        priorityPicker.dataSource = self
+        
+        
+        
+        
         
     }
     
@@ -74,10 +87,6 @@ class WriteTaskViewController: UIViewController {
         
         var toDoListExists = false
         var completedExists = false
-        
-        //TODO: test and fix this. categoriesFull is nil later when we are saving.
-        //might be best to just not turn it into an array list.  find a way to pull the data out and make a list of strings instead.
-        
         
         if let categoryList = categoriesFull{
             
@@ -151,7 +160,8 @@ class WriteTaskViewController: UIViewController {
                 //add it to the list
                 categories.append(newCategory)
                 
-                //TODO: update the category picker
+                //update the category picker
+                categoryPicker.reloadAllComponents()
                 
                 //TODO: set the category picker to display the newly added category
                 
@@ -188,14 +198,14 @@ class WriteTaskViewController: UIViewController {
     
     @IBAction func saveButtonPressed(_ sender: UIButton) {
         
+        print("save pressed")
+        
         //TODO: implement save and then go back to MainViewController
         
         var taskString = taskText.text.trimmingCharacters(in: .whitespacesAndNewlines)
         
-//        if(taskString == nil){
-//            taskString = ""
-//            print("task string was nil. setting to empty string")
-//        }
+        dueDate = calendarPicker.date
+        
         
         if(dueDate == nil){
             if(isEdit){
@@ -237,8 +247,12 @@ class WriteTaskViewController: UIViewController {
         //if the category does not exist, save it to realm db
         if let safeCategoriesFull = categoriesFull{
             if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
+                
+                print("cat doesn't exist")
+                
                 do{
                     try realm.write {
+                        print("write cat")
                         realm.add(category)
                     }
                     
@@ -256,16 +270,20 @@ class WriteTaskViewController: UIViewController {
         //editing a task
         if(isEdit){
             
+            print("save button: is edit")
+            
             taskToEdit.taskString = taskString
             taskToEdit.dueDate = dueDate!
             taskToEdit.priorityString = priorityString!
             taskToEdit.category = categoryString!
             taskToEdit.isDone = false
             
+            print("task : \(taskToEdit)")
             
             do{
-                try self.realm.write {
-                    
+                print("edit realm write do")
+                try realm.write {
+                    print("edit realm write try")
                     category.tasks.append(taskToEdit)
                     
                     goToMainScreen()
@@ -280,9 +298,14 @@ class WriteTaskViewController: UIViewController {
         //new task creation
         else{
             
+            print("save button: new task")
+            
+            print("task : \(newTask)")
             
             do{
-                try self.realm.write {
+                try realm.write {
+                    
+                    print("realm write")
                     
                     category.tasks.append(newTask)
                     
@@ -306,6 +329,79 @@ class WriteTaskViewController: UIViewController {
         
         secondVc.modalPresentationStyle = .fullScreen
         self.show(secondVc, sender: true)
+    }
+    
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        var n = 1
+        
+        if pickerView == categoryPicker {
+            
+            n = 1
+            
+        } else if pickerView == priorityPicker {
+            
+            n = 1
+            
+        }
+        
+        return n
+        
+        
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        
+        var n = 0
+        
+        if pickerView == categoryPicker {
+            
+            n = categories.count
+            
+        } else if pickerView == priorityPicker {
+            
+            n = priorityList.count
+            
+        }
+        
+        return n
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        
+        var s = ""
+        
+        if pickerView == categoryPicker {
+            
+            s = categories[row].categoryName
+            
+        } else if pickerView == priorityPicker {
+            
+            s = priorityList[row]
+            
+        }
+        
+        return s
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        
+        if pickerView == categoryPicker {
+            
+            categoryString = categories[row].categoryName
+            
+            print("category picker : \(categoryString)")
+            
+            
+        } else if pickerView == priorityPicker {
+            
+            priorityString = priorityList[row]
+            
+            print("priority picker : \(priorityString)")
+            
+        }
+        
+        
+        
     }
     
     

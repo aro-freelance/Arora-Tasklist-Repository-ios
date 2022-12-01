@@ -12,7 +12,25 @@ import RealmSwift
  this will show the tableview of tasks. it will have a dropdown to select categories (which will update which tasks are shown). equivalent of MainActivity in Android project.
  */
 
-class MainViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class TaskCell : UITableViewCell{
+    
+    var closure: (()->())?
+    
+    @IBOutlet weak var taskCellButton: UIButton!
+    
+    @IBOutlet weak var taskCellText: UILabel!
+    
+    @IBOutlet weak var taskCellDateLabel: UILabel!
+    
+    @IBAction func cellButtonPressed(_ sender: UIButton) {
+        closure?()
+    }
+    
+}
+
+
+class MainViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIPickerViewDataSource, UIPickerViewDelegate{
+    
     
     
     @IBOutlet weak var categoryPicker: UIPickerView!
@@ -21,7 +39,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     @IBOutlet weak var deleteCatButton: UIButton!
     
-    var categoryString : String = ""
+    var categoryString : String = "To Do List"
     var category : Category = Category()
     
     let realm = try! Realm()
@@ -40,16 +58,25 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        categoryPicker.delegate = self
+        categoryPicker.dataSource = self
+        
+        tableView.delegate = self
+        tableView.dataSource = self
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         
+        fullTaskList = realm.objects(Task.self)
         
         setCurrentTaskList(fullTaskList)
         
         currentTaskList = sortByDate(currentTaskList)
         
         setupCategories()
+        
+        tableView.rowHeight = 120
         
         tableView.reloadData()
         
@@ -62,10 +89,23 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         if let categoryList = categories{
             
             for category in categoryList{
+                
+                print("delete loop. \(category.categoryName)")
              
                 if(category.categoryName == categoryToDelete.categoryName){
                     
-                    categories?.realm?.delete(categoryToDelete)
+                    print("delete loop match")
+                    
+                    //Delete data from persistent storage
+                    do{
+                        //open transaction
+                        try self.realm.write {
+                            self.realm.delete(category)
+                            categoryPicker.reloadAllComponents()
+                        }
+                    } catch {
+                        print("Error deleting Category: \(error)")
+                    }
     
                 }
             }
@@ -154,9 +194,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         print("categories: \(categories)")
         
-        //TODO: set the categorylist to the category picker
-        
-        
         if(isLoadingFromDelete){
             //TODO: set the category picker to show completed list
             
@@ -174,6 +211,8 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         currentTaskList.removeAll()
         
+        print("set current task list")
+        
         //for the full list of tasks
         if let taskList = fullTaskList{
             for task in taskList{
@@ -181,17 +220,25 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                 //if the task matches the selected category
                 if(task.category == categoryString){
                     
+                    print("add task \(task.taskString) to current list")
+                    
                     //add it to the currentTaskList
                     currentTaskList.append(task)
                 }
                 
                 
             }
+        } else{
+            print("set current task list: failed to make list from full task list")
         }
+        
+        print("current task list count = \(currentTaskList.count)")
         
         //there are tasks in the current list
         if(currentTaskList.count > 0){
             deleteCatButton.isHidden = true
+            print("delete button hide")
+            
         }
         // there are not tasks in the current list
         else{
@@ -202,20 +249,26 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                     //TODO: display feedback to user telling them that the category is empty
                     deleteCatButton.isHidden = false
                     
+                    print("delete button show. category string = \(categoryString)")
+                    
                 }
             }
             //To Do List category empty
             else if (categoryString == "To Do List"){
                 //TODO: display feedback to user telling them that the category is empty
                 deleteCatButton.isHidden = true
+                print("delete button hide")
             }
             //completed category empty
             else{
                 //TODO: display feedback to user that there are no completed tasks
                 deleteCatButton.isHidden = true
+                print("delete button hide")
             }
             
         }
+        
+        tableView.reloadData()
         
     }
     
@@ -239,10 +292,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     
     
-    //picker methods
-    //TODO: picker item selected (change category)
-    
-    
     
 ///MARK: Tableview Methods
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -253,23 +302,62 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
+        //tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
         
         let task = currentTaskList[indexPath.row]
         
-        cell.textLabel?.text = task.taskString
+        cell.taskCellText.text = task.taskString
         
-        //TODO: method for checkmark clicked in Android reference onTaskRadioButtonClicked
-        cell.accessoryType = task.isDone ? .checkmark : .none
+        //TODO: make this into a more user friendly format
+        cell.taskCellDateLabel.text = task.dueDate.description
         
-        //TODO: show date in a better way?
-        cell.detailTextLabel?.text = task.dueDate.description
-        
+        cell.closure = {
+            
+            //if category is not completed, move task to completed
+            if(self.categoryString != "Completed"){
+                do{
+                    print("move task to Completed")
+                    var completedCat = Category()
+                    completedCat.categoryName = "Completed"
+
+                    task.category = "Completed"
+
+                    try self.realm.write {
+                        completedCat.tasks.append(task)
+
+                    }
+
+                } catch {
+                    print("Error editing task \(error)")
+                    //TODO: show user the feedback
+                }
+            }
+            //category is completed, prompt user to delete task
+            else{
+
+                //show a dialog to confirm that user wants to delete. if they do call delete()
+                let alert = UIAlertController(title: "Delete", message: "Are you sure that you want to delete this?", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Delete", style: .default, handler: { [weak alert] (_) in
+                    print("delete method called")
+                    self.delete(task: task)
+                }))
+                alert.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { [weak alert] (_) in
+                    print("delete canceled")
+                }))
+
+                self.present(alert, animated: true, completion: nil)
+
+            }
+            
+            
+        }
+       
         var priorityColor : UIColor = .gray
-        
+
         //TODO: test better colors
         if(task.priorityString == "LOW"){
-            priorityColor = .blue
+            priorityColor = .systemBlue
         } else if(task.priorityString == "MEDIUM"){
             priorityColor = .systemYellow
         } else if(task.priorityString == "HIGH"){
@@ -277,13 +365,45 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         } else{
             priorityColor = .white
         }
-    
+
         cell.backgroundColor = priorityColor
        
         
         return cell
         
     }
+    
+    func delete(task: Task){
+        //delete task
+        
+        print("delete task")
+        var completedCat = Category()
+        completedCat.categoryName = "Completed"
+        
+        task.category = "Completed"
+        
+        if let index = completedCat.tasks.firstIndex(of: task){
+            
+            do{
+                
+                try self.realm.write {
+                    
+                    completedCat.tasks.remove(at: index)
+                    
+                }
+                
+            } catch {
+                print("Error editing task \(error)")
+                //TODO: show user the feedback
+            }
+            
+        } else{
+            print("could not find index of task in completed list matching task to delete")
+        }
+        
+    }
+    
+    
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -299,6 +419,42 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return categories?.count ?? 0
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        return categories?[row].categoryName ?? ""
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        
+        if let string = categories?[row].categoryName {
+            
+            categoryString = string
+            category.categoryName = categoryString
+            
+            print("category string = \(categoryString)")
+            
+            setCurrentTaskList(fullTaskList)
+            
+            currentTaskList = sortByDate(currentTaskList)
+            
+            tableView.reloadData()
+            
+            
+        }
+        else{
+            
+            print("category selected could not be obtained")
+        }
+        
+        
+    }
 
 }
 
