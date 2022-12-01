@@ -24,7 +24,7 @@ class Task : Object {
     @objc dynamic var isDone : Bool = false
     
     
-    
+    var parentCategory = LinkingObjects(fromType: Category.self, property: "tasks")
     
     
 //    init(taskName : String, priorityTypeString : String, categoryString : String, dueDateSelected : Date){

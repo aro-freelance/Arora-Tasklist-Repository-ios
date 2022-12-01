@@ -70,6 +70,8 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         fullTaskList = realm.objects(Task.self)
         
+        print("full list count: \(fullTaskList?.count ?? 0)")
+        
         setCurrentTaskList(fullTaskList)
         
         currentTaskList = sortByDate(currentTaskList)
@@ -295,6 +297,8 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
 ///MARK: Tableview Methods
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        print("number on rows: \(currentTaskList.count)")
         
         return currentTaskList.count
     }

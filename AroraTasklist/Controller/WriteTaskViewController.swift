@@ -208,6 +208,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         
         
         if(dueDate == nil){
+            print("duedate nil")
             if(isEdit){
                 dueDate = taskToEdit.dueDate
             }
@@ -217,6 +218,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         }
         
         if(priorityString == nil){
+            print("priority string nil")
             if(isEdit){
                 priorityString = taskToEdit.priorityString
             }
@@ -226,6 +228,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         }
         
         if(categoryString == nil){
+            print("category string nil")
             if(isEdit){
                 categoryString = taskToEdit.category
             }
@@ -234,91 +237,99 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             }
         }
         
-        var category = Category()
-        category.categoryName = categoryString!
         
-        var newTask = Task()
-        newTask.taskString = taskString
-        newTask.dueDate = dueDate!
-        newTask.priorityString = priorityString!
-        newTask.category = categoryString!
-        
-        
-        //if the category does not exist, save it to realm db
-        if let safeCategoriesFull = categoriesFull{
-            if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
+        if let category = realm.objects(Category.self).first(where: {$0.categoryName == categoryString!}){
+            
+            
+            var newTask = Task()
+            newTask.taskString = taskString
+            newTask.dueDate = dueDate!
+            newTask.priorityString = priorityString!
+            newTask.category = categoryString!
+            
+            
+            //if the category does not exist, save it to realm db
+            if let safeCategoriesFull = categoriesFull{
+                if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
+                    
+                    print("cat doesn't exist")
+                    
+                    do{
+                        try realm.write {
+                            print("write cat")
+                            realm.add(category)
+                        }
+                        
+                    } catch {
+                        print("Error saving category \(error)")
+                        //TODO: show user the feedback
+                    }
+                }
+            } else{
+                print("categories full is nil. cannot write new category")
+                //TODO: show user that saving failed
+            }
+            
+            
+            //editing a task
+            if(isEdit){
                 
-                print("cat doesn't exist")
+                print("save button: is edit")
+                
+                taskToEdit.taskString = taskString
+                taskToEdit.dueDate = dueDate!
+                taskToEdit.priorityString = priorityString!
+                taskToEdit.category = categoryString!
+                taskToEdit.isDone = false
+                
+                print("task : \(taskToEdit)")
+                print("category: \(category)")
                 
                 do{
-                    try realm.write {
-                        print("write cat")
-                        realm.add(category)
+                    print("edit realm write do")
+                    try self.realm.write {
+                        print("edit realm write try")
+                        category.tasks.append(taskToEdit)
+                        
+                        self.goToMainScreen()
                     }
                     
                 } catch {
-                    print("Error saving category \(error)")
+                    print("Error editing task \(error)")
                     //TODO: show user the feedback
                 }
+                
             }
-        } else{
-            print("categories full is nil. cannot write new category")
-            //TODO: show user that saving failed
-        }
-        
-        
-        //editing a task
-        if(isEdit){
-            
-            print("save button: is edit")
-            
-            taskToEdit.taskString = taskString
-            taskToEdit.dueDate = dueDate!
-            taskToEdit.priorityString = priorityString!
-            taskToEdit.category = categoryString!
-            taskToEdit.isDone = false
-            
-            print("task : \(taskToEdit)")
-            
-            do{
-                print("edit realm write do")
-                try realm.write {
-                    print("edit realm write try")
-                    category.tasks.append(taskToEdit)
+            //new task creation
+            else{
+                
+                print("save button: new task")
+                
+                print("task : \(newTask)")
+                print("category: \(category)")
+                
+                do{
+                    try self.realm.write {
+                        
+                        print("realm write")
+                        
+                        category.tasks.append(newTask)
+                        
+                        self.goToMainScreen()
+                    }
                     
-                    goToMainScreen()
+                } catch {
+                    print("Error saving new task \(error)")
+                    //TODO: show user the feedback
                 }
                 
-            } catch {
-                print("Error editing task \(error)")
-                //TODO: show user the feedback
+                
             }
-            
         }
-        //new task creation
         else{
-            
-            print("save button: new task")
-            
-            print("task : \(newTask)")
-            
-            do{
-                try realm.write {
-                    
-                    print("realm write")
-                    
-                    category.tasks.append(newTask)
-                    
-                    goToMainScreen()
-                }
-                
-            } catch {
-                print("Error saving new task \(error)")
-                //TODO: show user the feedback
-            }
-            
-            
+            print("could not retrieve category from realm ")
         }
+        
         
         
     }
