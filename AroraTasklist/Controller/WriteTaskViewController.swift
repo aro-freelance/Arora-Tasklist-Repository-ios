@@ -233,6 +233,43 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             }
         }
         
+        //if the category does not exist, save it to realm db
+        if let safeCategoriesFull = categoriesFull{
+            if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
+                
+                var category = Category()
+                category.categoryName = categoryString!
+                
+                do{
+                    try realm.write {
+                        print("write cat")
+                        realm.add(category)
+                    }
+                    
+                } catch {
+                    print("Error saving category \(error)")
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to save category. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
+                }
+            }
+        } else{
+            print("categories full is nil. cannot write new category")
+            //show error feedback to user
+            let alert = UIAlertController(title: "Error", message: "Cannot access saved categories.", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
+        }
+        
         
         if let category = realm.objects(Category.self).first(where: {$0.categoryName == categoryString!}){
             
@@ -244,39 +281,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             newTask.category = categoryString!
             
             
-            //if the category does not exist, save it to realm db
-            if let safeCategoriesFull = categoriesFull{
-                if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
-                    
-                    do{
-                        try realm.write {
-                            print("write cat")
-                            realm.add(category)
-                        }
-                        
-                    } catch {
-                        print("Error saving category \(error)")
-                        //show error feedback to user
-                        let alert = UIAlertController(title: "Error", message: "Failed to save category. \(error)", preferredStyle: .alert)
-                        
-                        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
-                            
-                        }))
-                        
-                        self.present(alert, animated: true, completion: nil)
-                    }
-                }
-            } else{
-                print("categories full is nil. cannot write new category")
-                //show error feedback to user
-                let alert = UIAlertController(title: "Error", message: "Cannot access saved categories.", preferredStyle: .alert)
-                
-                alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
-                    
-                }))
-                
-                self.present(alert, animated: true, completion: nil)
-            }
+            
             
             
             //editing a task

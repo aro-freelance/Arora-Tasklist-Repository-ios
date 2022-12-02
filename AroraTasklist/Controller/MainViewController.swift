@@ -48,7 +48,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     var categories : Results<Category>?
     
-    var isLoadingFromDelete = false
+    var isLoadingToCompleted = false
     
     var isEdit = false
     
@@ -72,8 +72,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         setCurrentTaskList(fullTaskList)
         
-        currentTaskList = sortByDate(currentTaskList)
-        
         setupCategories()
         
         tableView.rowHeight = 120
@@ -83,7 +81,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     func deleteCategory(){
-        
+        //TODO: fix this... error basically saying it is gone.  probably because of reloading the picker without updating the list?
         if let categoryToDelete : Category = realm.objects(Category.self).first(where: {$0.categoryName == categoryString}){
             if let categoryList = categories{
                 
@@ -97,8 +95,13 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                         do{
                             //open transaction
                             try self.realm.write {
+                                
                                 self.realm.delete(categoryToDelete)
-                                categoryPicker.reloadAllComponents()
+                                
+                                self.setupCategories()
+                                
+//                                self.categoryPicker.reloadAllComponents()
+//                                self.tableView.reloadData()
                             }
                         } catch {
                             print("Error deleting Category: \(error)")
@@ -216,16 +219,51 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             
         }
         
-        if(isLoadingFromDelete){
-            //TODO: set the category picker to show completed list
-            
-            isLoadingFromDelete = false
+        setPicker()
+        
+        
+    }
+    
+    func setPicker(){
+        print("set picker")
+        
+        categoryPicker.reloadAllComponents()
+        
+        if(isLoadingToCompleted){
+            //set the category picker to show completed list
+            if let index = categories?.firstIndex(where: {$0.categoryName == "Completed"}){
+                
+                categoryPicker.selectRow(index, inComponent: 0, animated: true)
+                
+                
+                //TODO: get this from the picker instead
+                categoryString = "Completed"
+                
+                setCurrentTaskList(fullTaskList)
+                
+                tableView.reloadData()
+            }
+            else{
+                print("cannot obtain completed index")
+            }
+            isLoadingToCompleted = false
             
         }
         else{
-            //TODO: set the category picker to the first item
+            //set the categpory picker to show the first task (To Do List)
+            categoryPicker.selectRow(0, inComponent: 0, animated: true)
+            
+            
+            //TODO: get this from the picker instead
+            categoryString = "To Do List"
+            
+            setCurrentTaskList(fullTaskList)
+            
+            tableView.reloadData()
         }
         
+        
+        deleteCatButton.isHidden = true
         
     }
     
@@ -242,8 +280,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                 //if the task matches the selected category
                 if(task.category == categoryString){
                     
-                    print("add task \(task.taskString) to current list")
-                    
                     //add it to the currentTaskList
                     currentTaskList.append(task)
                 }
@@ -259,7 +295,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         //there are tasks in the current list
         if(currentTaskList.count > 0){
             deleteCatButton.isHidden = true
-            print("delete button hide")
             
         }
         // there are not tasks in the current list
@@ -271,24 +306,22 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                     //TODO: tell user that the category is empty in a label
                     deleteCatButton.isHidden = false
                     
-                    print("delete button show. category string = \(categoryString)")
-                    
                 }
             }
             //To Do List category empty
             else if (categoryString == "To Do List"){
                 //TODO: tell user that category is empty in a label
                 deleteCatButton.isHidden = true
-                print("delete button hide")
             }
             //completed category empty
             else{
                 //TODO: tell user that no tasks are completed in a label
                 deleteCatButton.isHidden = true
-                print("delete button hide")
             }
             
         }
+        
+        currentTaskList = sortByDate(currentTaskList)
         
         tableView.reloadData()
         
@@ -317,9 +350,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
 ///MARK: Tableview Methods
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        print("number on rows: \(currentTaskList.count)")
-        
         return currentTaskList.count
     }
     
@@ -341,8 +371,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             //if category is not completed, move task to completed
             if(self.categoryString != "Completed"){
                 if let completedCat = self.realm.objects(Category.self).first(where: {$0.self.categoryName == "Completed"}){
-                    
-                    
+                
                     do{
 
                         try self.realm.write {
@@ -350,7 +379,10 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                     
                             completedCat.tasks.append(task)
                             
-                            self.categoryPicker.reloadAllComponents()
+                            //TODO: display label saying it was deleted?
+                            
+                            self.isLoadingToCompleted = true
+                            self.setPicker()
 
                         }
 
@@ -410,40 +442,27 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     func delete(task: Task){
-        //delete task
         
-        print("delete task")
-        if let completedCat = self.realm.objects(Category.self).first(where: {$0.categoryName == "Completed"}){
+        //delete task
+        if let taskToDelete = self.realm.objects(Task.self).first(where: {$0.taskString == task.taskString}){
             
-            
-            if let index = completedCat.tasks.firstIndex(of: task){
-                
-                do{
+            do{
+                //TODO: make this load back to completed.  not to to do
+                try self.realm.write {
+                    realm.delete(taskToDelete)
                     
-                    try self.realm.write {
-                        task.category = "Completed"
-                        completedCat.tasks.remove(at: index)
-                        
-                        self.categoryPicker.reloadAllComponents()
-                        
-                    }
+                    isLoadingToCompleted = true
+                    setPicker()
                     
-                } catch {
-                    print("Error deleting task \(error)")
-                    //show error feedback to user
-                    let alert = UIAlertController(title: "Error", message: "Failed to remove task. \(error)", preferredStyle: .alert)
+//                    self.categoryPicker.reloadAllComponents()
+//                    self.tableView.reloadData()
                     
-                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
-                        
-                    }))
-                    
-                    self.present(alert, animated: true, completion: nil)
                 }
                 
-            } else{
-                print("could not find index of task in completed list matching task to delete")
+            } catch {
+                print("Error deleting task \(error)")
                 //show error feedback to user
-                let alert = UIAlertController(title: "Error", message: "Failed to find task to remove.", preferredStyle: .alert)
+                let alert = UIAlertController(title: "Error", message: "Failed to remove task. \(error)", preferredStyle: .alert)
                 
                 alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
                     
@@ -452,7 +471,9 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                 self.present(alert, animated: true, completion: nil)
             }
             
+            
         }
+
     }
     
     
@@ -493,8 +514,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             print("category string = \(categoryString)")
             
             setCurrentTaskList(fullTaskList)
-            
-            currentTaskList = sortByDate(currentTaskList)
             
             tableView.reloadData()
             
