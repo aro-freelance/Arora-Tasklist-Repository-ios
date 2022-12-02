@@ -27,16 +27,4 @@ class Task : Object {
     var parentCategory = LinkingObjects(fromType: Category.self, property: "tasks")
     
     
-//    init(taskName : String, priorityTypeString : String, categoryString : String, dueDateSelected : Date){
-//        
-//        taskString = taskName
-//        priorityString = priorityTypeString
-//        category = categoryString
-//        dueDate = dueDateSelected
-//        dateCreated = Date()
-//        isDone = false
-//        
-//    }
-    
-    
 }

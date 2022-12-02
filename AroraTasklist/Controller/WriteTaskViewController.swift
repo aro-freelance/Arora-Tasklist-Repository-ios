@@ -151,6 +151,8 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         if let userCategoryInput = categoryText.text?.trimmingCharacters(in: .whitespacesAndNewlines){
             if(!userCategoryInput.isEmpty){
                 
+                print("user category input obtained")
+                
                 //make a category from it
                 var newCategory = Category()
                 newCategory.categoryName = userCategoryInput
@@ -159,8 +161,9 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                 
                 //update the category picker
                 categoryPicker.reloadAllComponents()
-                
-                //TODO: set the category picker to display the newly added category
+               
+                //show newest catgory on the picker
+                categoryPicker.selectRow(categories.count - 1, inComponent: 0, animated: true)
                 
                 //set the category string to the user input
                 categoryString = userCategoryInput

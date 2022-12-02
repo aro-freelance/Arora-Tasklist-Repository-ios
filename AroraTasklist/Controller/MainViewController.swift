@@ -81,15 +81,13 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     func deleteCategory(){
-        //TODO: fix this... error basically saying it is gone.  probably because of reloading the picker without updating the list?
+        
         if let categoryToDelete : Category = realm.objects(Category.self).first(where: {$0.categoryName == categoryString}){
             if let categoryList = categories{
                 
                 for category in categoryList{
                     
                     if(category.categoryName == categoryToDelete.categoryName){
-                        
-                        print("delete loop match")
                         
                         //Delete data from persistent storage
                         do{
@@ -98,10 +96,9 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
                                 
                                 self.realm.delete(categoryToDelete)
                                 
-                                self.setupCategories()
+                                self.setPicker()
                                 
-//                                self.categoryPicker.reloadAllComponents()
-//                                self.tableView.reloadData()
+                                
                             }
                         } catch {
                             print("Error deleting Category: \(error)")
@@ -363,8 +360,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         cell.taskCellText.text = task.taskString
         
-        //TODO: make this into a more user friendly format
-        cell.taskCellDateLabel.text = task.dueDate.description
+        cell.taskCellDateLabel.text = task.dueDate.formatted()
         
         cell.closure = {
             
@@ -447,15 +443,13 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         if let taskToDelete = self.realm.objects(Task.self).first(where: {$0.taskString == task.taskString}){
             
             do{
-                //TODO: make this load back to completed.  not to to do
+                
                 try self.realm.write {
                     realm.delete(taskToDelete)
                     
                     isLoadingToCompleted = true
                     setPicker()
                     
-//                    self.categoryPicker.reloadAllComponents()
-//                    self.tableView.reloadData()
                     
                 }
                 

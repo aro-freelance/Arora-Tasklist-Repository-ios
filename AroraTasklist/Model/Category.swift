@@ -16,10 +16,4 @@ class Category: Object {
     let tasks = List<Task>()
     
     
-//    init(name : String){
-//        
-//        categoryName = name
-//    }
-    
-    
 }
