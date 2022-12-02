@@ -40,8 +40,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
     
     var categoryString : String?
     
-    //var categoryStrings = [String]()
-    
     var categoriesFull : Results<Category>?
     
     var categories = [Category]()
@@ -94,14 +92,11 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
              
                 if(category.categoryName == "To Do List"){
                     
-                    print("to do list exists")
                     toDoListExists = true
     
                 }
                 
                 if(category.categoryName == "Completed"){
-                    
-                    print("completed exists")
                     completedExists = true
     
                 }
@@ -109,7 +104,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             }
             
             if(toDoListExists){
-                print("filling list without adding to do list")
                 for category in categoryList {
                     
                     categories.append(category)
@@ -117,7 +111,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                 }
             }
             else{
-                print("filling list adding to do list")
                 var toDoCat = Category()
                 toDoCat.categoryName = "To Do List"
                 
@@ -137,14 +130,18 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                 }
             }
             
-            print("categories: \(categories)")
             
         } else{
             print("WriteVC: failed to get category list from realm")
+            //show error feedback to user
+            let alert = UIAlertController(title: "Error", message: "Failed to load categories", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
         }
-        
-        
-        //TODO: set the categorylist to the category picker
         
     }
     
@@ -176,7 +173,14 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             else{
                 print("empty category string submitted")
                 
-                //TODO: feedback to user that they cannot enter an empty string as a category
+                //show error feedback to user
+                let alert = UIAlertController(title: "Error", message: "Empty Category cannot be submitted.", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                    
+                }))
+                
+                self.present(alert, animated: true, completion: nil)
                 
             }
         }
@@ -191,16 +195,11 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         
         //user is entering a category. show them the button to submit it.
         addCategoryButton.isHidden = false
-        print("editing category text. button should show.")
     }
     
     
     
     @IBAction func saveButtonPressed(_ sender: UIButton) {
-        
-        print("save pressed")
-        
-        //TODO: implement save and then go back to MainViewController
         
         var taskString = taskText.text.trimmingCharacters(in: .whitespacesAndNewlines)
         
@@ -208,7 +207,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         
         
         if(dueDate == nil){
-            print("duedate nil")
             if(isEdit){
                 dueDate = taskToEdit.dueDate
             }
@@ -218,7 +216,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         }
         
         if(priorityString == nil){
-            print("priority string nil")
             if(isEdit){
                 priorityString = taskToEdit.priorityString
             }
@@ -228,7 +225,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         }
         
         if(categoryString == nil){
-            print("category string nil")
             if(isEdit){
                 categoryString = taskToEdit.category
             }
@@ -252,8 +248,6 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
             if let safeCategoriesFull = categoriesFull{
                 if(!(safeCategoriesFull.contains(where: {$0.categoryName == categoryString}))){
                     
-                    print("cat doesn't exist")
-                    
                     do{
                         try realm.write {
                             print("write cat")
@@ -262,19 +256,31 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                         
                     } catch {
                         print("Error saving category \(error)")
-                        //TODO: show user the feedback
+                        //show error feedback to user
+                        let alert = UIAlertController(title: "Error", message: "Failed to save category. \(error)", preferredStyle: .alert)
+                        
+                        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                            
+                        }))
+                        
+                        self.present(alert, animated: true, completion: nil)
                     }
                 }
             } else{
                 print("categories full is nil. cannot write new category")
-                //TODO: show user that saving failed
+                //show error feedback to user
+                let alert = UIAlertController(title: "Error", message: "Cannot access saved categories.", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                    
+                }))
+                
+                self.present(alert, animated: true, completion: nil)
             }
             
             
             //editing a task
             if(isEdit){
-                
-                print("save button: is edit")
                 
                 taskToEdit.taskString = taskString
                 taskToEdit.dueDate = dueDate!
@@ -282,13 +288,8 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                 taskToEdit.category = categoryString!
                 taskToEdit.isDone = false
                 
-                print("task : \(taskToEdit)")
-                print("category: \(category)")
-                
                 do{
-                    print("edit realm write do")
                     try self.realm.write {
-                        print("edit realm write try")
                         category.tasks.append(taskToEdit)
                         
                         self.goToMainScreen()
@@ -296,22 +297,22 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                     
                 } catch {
                     print("Error editing task \(error)")
-                    //TODO: show user the feedback
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to save edited task. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
                 }
                 
             }
             //new task creation
             else{
                 
-                print("save button: new task")
-                
-                print("task : \(newTask)")
-                print("category: \(category)")
-                
                 do{
                     try self.realm.write {
-                        
-                        print("realm write")
                         
                         category.tasks.append(newTask)
                         
@@ -320,7 +321,14 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
                     
                 } catch {
                     print("Error saving new task \(error)")
-                    //TODO: show user the feedback
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to save task. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
                 }
                 
                 
@@ -328,6 +336,14 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         }
         else{
             print("could not retrieve category from realm ")
+            //show error feedback to user
+            let alert = UIAlertController(title: "Error", message: "Failed to load category.", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
         }
         
         
@@ -342,6 +358,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         self.show(secondVc, sender: true)
     }
     
+    //picker number of columns
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         var n = 1
         
@@ -360,6 +377,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         
     }
     
+    //picker number of rows
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         
         var n = 0
@@ -377,6 +395,7 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         return n
     }
     
+    //display lists to pickers
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         
         var s = ""
@@ -394,20 +413,17 @@ class WriteTaskViewController: UIViewController, UIPickerViewDelegate, UIPickerV
         return s
     }
     
+    //when a selection is made in a picker, set the correct value to our variables
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         
         if pickerView == categoryPicker {
             
             categoryString = categories[row].categoryName
             
-            print("category picker : \(categoryString)")
-            
             
         } else if pickerView == priorityPicker {
             
             priorityString = priorityList[row]
-            
-            print("priority picker : \(priorityString)")
             
         }
         

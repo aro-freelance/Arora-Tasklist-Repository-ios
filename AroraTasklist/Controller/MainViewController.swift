@@ -70,8 +70,6 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         fullTaskList = realm.objects(Task.self)
         
-        print("full list count: \(fullTaskList?.count ?? 0)")
-        
         setCurrentTaskList(fullTaskList)
         
         currentTaskList = sortByDate(currentTaskList)
@@ -86,32 +84,32 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func deleteCategory(){
         
-        var categoryToDelete : Category = category
-        
-        if let categoryList = categories{
-            
-            for category in categoryList{
+        if let categoryToDelete : Category = realm.objects(Category.self).first(where: {$0.categoryName == categoryString}){
+            if let categoryList = categories{
                 
-                print("delete loop. \(category.categoryName)")
-             
-                if(category.categoryName == categoryToDelete.categoryName){
+                for category in categoryList{
                     
-                    print("delete loop match")
-                    
-                    //Delete data from persistent storage
-                    do{
-                        //open transaction
-                        try self.realm.write {
-                            self.realm.delete(category)
-                            categoryPicker.reloadAllComponents()
+                    if(category.categoryName == categoryToDelete.categoryName){
+                        
+                        print("delete loop match")
+                        
+                        //Delete data from persistent storage
+                        do{
+                            //open transaction
+                            try self.realm.write {
+                                self.realm.delete(categoryToDelete)
+                                categoryPicker.reloadAllComponents()
+                            }
+                        } catch {
+                            print("Error deleting Category: \(error)")
                         }
-                    } catch {
-                        print("Error deleting Category: \(error)")
+                        
                     }
-    
                 }
             }
         }
+            
+           
     }
     
     
@@ -158,43 +156,65 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
         else{
             print("Main: failed to get categories from realm")
+            //show error feedback to user
+            let alert = UIAlertController(title: "Error", message: "Failed to load categories", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
         }
         
         if(!toDoListExists){
             
-            var category = Category()
-            category.categoryName = "To Do List"
-            
-            do{
-                try realm.write {
-                    realm.add(category)
+            if let category = realm.objects(Category.self).first(where: {$0.categoryName == "To Do List"}){
+             
+                do{
+                    try realm.write {
+                        realm.add(category)
+                    }
+                    
+                } catch {
+                    print("Error saving category \(error)")
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to save category. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
                 }
                 
-            } catch {
-                print("Error saving category \(error)")
-                //TODO: show user the feedback
             }
             
         }
         
         if(!completedExists){
             
-            var category = Category()
-            category.categoryName = "Completed"
-            
-            do{
-                try realm.write {
-                    realm.add(category)
+            if let category = realm.objects(Category.self).first(where: {$0.categoryName == "Completed"}){
+             
+                do{
+                    try realm.write {
+                        realm.add(category)
+                    }
+                    
+                } catch {
+                    print("Error saving category \(error)")
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to save category. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
                 }
                 
-            } catch {
-                print("Error saving category \(error)")
-                //TODO: show user the feedback
             }
             
         }
-        
-        print("categories: \(categories)")
         
         if(isLoadingFromDelete){
             //TODO: set the category picker to show completed list
@@ -248,7 +268,7 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             //if the category is not a default category and is empty show the delete category button
             if(categoryString != nil){
                 if(categoryString != "To Do List" && categoryString != "Completed"){
-                    //TODO: display feedback to user telling them that the category is empty
+                    //TODO: tell user that the category is empty in a label
                     deleteCatButton.isHidden = false
                     
                     print("delete button show. category string = \(categoryString)")
@@ -257,13 +277,13 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             }
             //To Do List category empty
             else if (categoryString == "To Do List"){
-                //TODO: display feedback to user telling them that the category is empty
+                //TODO: tell user that category is empty in a label
                 deleteCatButton.isHidden = true
                 print("delete button hide")
             }
             //completed category empty
             else{
-                //TODO: display feedback to user that there are no completed tasks
+                //TODO: tell user that no tasks are completed in a label
                 deleteCatButton.isHidden = true
                 print("delete button hide")
             }
@@ -320,25 +340,37 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
             
             //if category is not completed, move task to completed
             if(self.categoryString != "Completed"){
-                do{
-                    print("move task to Completed")
-                    var completedCat = Category()
-                    completedCat.categoryName = "Completed"
+                if let completedCat = self.realm.objects(Category.self).first(where: {$0.self.categoryName == "Completed"}){
+                    
+                    
+                    do{
 
-                    task.category = "Completed"
+                        try self.realm.write {
+                            task.category = "Completed"
+                    
+                            completedCat.tasks.append(task)
+                            
+                            self.categoryPicker.reloadAllComponents()
 
-                    try self.realm.write {
-                        completedCat.tasks.append(task)
+                        }
 
+                    } catch {
+                        print("Error editing task \(error)")
+                        //show error feedback to user
+                        let alert = UIAlertController(title: "Error", message: "Failed to edit task. \(error)", preferredStyle: .alert)
+
+                        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+
+                        }))
+
+                        self.present(alert, animated: true, completion: nil)
                     }
-
-                } catch {
-                    print("Error editing task \(error)")
-                    //TODO: show user the feedback
+                    
                 }
             }
             //category is completed, prompt user to delete task
             else{
+                
 
                 //show a dialog to confirm that user wants to delete. if they do call delete()
                 let alert = UIAlertController(title: "Delete", message: "Are you sure that you want to delete this?", preferredStyle: .alert)
@@ -381,30 +413,46 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         //delete task
         
         print("delete task")
-        var completedCat = Category()
-        completedCat.categoryName = "Completed"
-        
-        task.category = "Completed"
-        
-        if let index = completedCat.tasks.firstIndex(of: task){
+        if let completedCat = self.realm.objects(Category.self).first(where: {$0.categoryName == "Completed"}){
             
-            do{
+            
+            if let index = completedCat.tasks.firstIndex(of: task){
                 
-                try self.realm.write {
+                do{
                     
-                    completedCat.tasks.remove(at: index)
+                    try self.realm.write {
+                        task.category = "Completed"
+                        completedCat.tasks.remove(at: index)
+                        
+                        self.categoryPicker.reloadAllComponents()
+                        
+                    }
                     
+                } catch {
+                    print("Error deleting task \(error)")
+                    //show error feedback to user
+                    let alert = UIAlertController(title: "Error", message: "Failed to remove task. \(error)", preferredStyle: .alert)
+                    
+                    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                        
+                    }))
+                    
+                    self.present(alert, animated: true, completion: nil)
                 }
                 
-            } catch {
-                print("Error editing task \(error)")
-                //TODO: show user the feedback
+            } else{
+                print("could not find index of task in completed list matching task to delete")
+                //show error feedback to user
+                let alert = UIAlertController(title: "Error", message: "Failed to find task to remove.", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                    
+                }))
+                
+                self.present(alert, animated: true, completion: nil)
             }
             
-        } else{
-            print("could not find index of task in completed list matching task to delete")
         }
-        
     }
     
     
@@ -455,6 +503,14 @@ class MainViewController: UIViewController, UITableViewDataSource, UITableViewDe
         else{
             
             print("category selected could not be obtained")
+            //show error feedback to user
+            let alert = UIAlertController(title: "Error", message: "Failed to find category", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { [weak alert] (_) in
+                
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
         }
         
         
